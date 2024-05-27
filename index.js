@@ -1,27 +1,128 @@
-const canvas = document.getElementById('myCanvas');
-const ctx = canvas.getContext('2d');
-
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
 class Game {
-  constructor(context) {
-    this.context = context;
-    this.player = new Player(this.context);
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.width = this.canvas.width;
+    this.height = this.canvas.height;
+    this.player = new Player(this);
     this.enemies = [];
+    this.numberOfProjecttile = 5;
     this.projectiles = [];
-  }
-  draw() {
-    // clear previous frame
-    this.clearCanvas();
+    this.keys = [];
+
+    this.createProjectiles();
+
+    window.addEventListener('keydown', (e) => {
+      const index = this.keys.indexOf(e.key);
+      if (index === -1) this.keys.push(e.key);
+      if (e.key == ' ') this.player.shoot();
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const index = this.keys.indexOf(e.key);
+      if (index > -1) this.keys.splice(index, 1);
+    });
+
+    console.log(this.projectiles);
   }
 
-  clearCanvas() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  render(context) {
+    this.clearCanvas(context); // clear previous frame
+    this.player.draw(context);
+    this.player.update();
+    this.projectiles.forEach((p) => {
+      p.update();
+      p.draw(context);
+    });
   }
 
-  update() {}
+  clearCanvas(context) {
+    context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+
+  createProjectiles() {
+    for (let i = 0; i < this.numberOfProjecttile; i++) {
+      this.projectiles[i] = new Projectile();
+    }
+  }
+
+  getProjectile() {
+    for (let i = 0; i < this.numberOfProjecttile; i++) {
+      if (this.projectiles[i].isFree) return this.projectiles[i];
+    }
+  }
+
   collisionDectection() {}
+}
+
+class Player {
+  constructor(game) {
+    this.game = game;
+    this.width = 100;
+    this.height = 100;
+    this.x = (this.game.width - this.width) * 0.5;
+    this.y = this.game.height - this.height;
+    this.speed = 5;
+  }
+
+  draw(context) {
+    context.beginPath();
+    context.rect(this.x, this.y, this.width, this.height);
+    context.fillStyle = '#FF0000';
+    context.fill();
+    context.closePath();
+  }
+
+  update() {
+    if (this.game.keys.indexOf('ArrowLeft') > -1) {
+      this.x = Math.max(this.x - this.speed, 0);
+    }
+    if (this.game.keys.indexOf('ArrowRight') > -1) {
+      this.x = Math.min(this.x + this.speed, this.game.width - this.width);
+    }
+  }
+
+  shoot() {
+    const projectile = this.game.getProjectile();
+    if (projectile) projectile.start(this.x + this.width * 0.5, this.y);
+  }
+}
+
+class Projectile {
+  constructor() {
+    this.width = 8;
+    this.height = 30;
+    this.x = 0;
+    this.y = 600;
+    this.speed = 20;
+    this.isFree = true;
+  }
+
+  draw(context) {
+    if (!this.isFree) {
+      context.beginPath();
+      context.rect(this.x, this.y, this.width, this.height);
+      context.fillStyle = '#FF0000';
+      context.fill();
+      context.closePath();
+    }
+  }
+
+  update() {
+    if (!this.isFree) {
+      this.y -= this.speed;
+      if(this.y < -this.height) this.reset();
+    }
+  }
+
+  start(x, y) {
+    this.x = x - this.width * 0.5;
+    this.y = y;
+    this.isFree = false;
+  }
+
+  reset() {
+    this.isFree = true;
+  }
 }
 
 class Enemy {
@@ -32,40 +133,21 @@ class Enemy {
   update() {}
 }
 
-class Player {
-  constructor(context) {
-    this.x = 0;
-    this.y = 0;
-    this.vx = 5;
-    this.vy = 5;
-    this.context = context;
+window.addEventListener('load', () => {
+  const canvas = document.getElementById('myCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 600;
+  canvas.height = 800;
+
+  const game = new Game(canvas);
+
+  const testLimit = 24;
+  let frame = 0;
+
+  function animate() {
+    // frame === testLimit ? frame++ : return 0;
+    game.render(ctx);
+    window.requestAnimationFrame(animate);
   }
-  draw() {}
-  update() {}
-}
-
-class Projectile {
-  constructor() {
-    this.isFired = false;
-  }
-  draw() {}
-  update() {}
-}
-
-// ctx.beginPath();
-// ctx.rect(20, 40, 50, 50);
-// ctx.fillStyle = '#FF0000';
-// ctx.fill();
-// ctx.closePath();
-
-// ctx.beginPath();
-// ctx.arc(240, 160, 20, 0, Math.PI * 2, false);
-// ctx.fillStyle = 'green';
-// ctx.fill();
-// ctx.closePath();
-
-// ctx.beginPath();
-// ctx.rect(160, 10, 100, 40);
-// ctx.strokeStyle = 'rgb(0 0 255 / 50%)';
-// ctx.stroke();
-// ctx.closePath();
+  animate();
+});
