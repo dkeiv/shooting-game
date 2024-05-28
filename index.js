@@ -1,3 +1,5 @@
+const TEXT_COLOR = 'white';
+
 class Game {
   constructor(canvas) {
     this.canvas = canvas;
@@ -78,18 +80,29 @@ class Game {
 
   drawStatus(context) {
     context.save();
+
+    context.font = '30px Arial';
     context.fillText(`Score: ${this.score} `, 20, 40);
-    context.fillText(`HP: ${this.player.live} `, 20, 60);
+    context.fillText(`HP: ${this.player.live} `, 20, 80);
     if (this.gameOver) {
       context.textAlign = 'center';
-      context.font = '100px';
+      context.font = '50px Arial';
       context.fillText(`GAME OVER!`, this.width * 0.5, this.height * 0.5);
+
+      context.font = '20px Arial';
+      context.fillText(
+        `Press "R" to restart`,
+        this.width * 0.5,
+        this.height * 0.5 + 30
+      );
     }
     context.restore();
   }
 
   increaseScoreBy(score) {
-    this.score += score;
+    if (!this.gameOver) {
+      this.score += score;
+    }
   }
 
   newWave() {
@@ -119,12 +132,12 @@ class Player {
   draw(context) {
     context.beginPath();
     context.rect(this.x, this.y, this.width, this.height);
-    context.fillStyle = '#FF0000';
+    context.fillStyle = TEXT_COLOR;
     context.fill();
     context.closePath();
     context.beginPath();
     context.rect(this.x, this.y, this.width, this.height);
-    context.fillStyle = '#FF0000';
+    context.fillStyle = TEXT_COLOR;
     context.fill();
     context.closePath();
   }
@@ -139,8 +152,10 @@ class Player {
   }
 
   shoot() {
-    const projectile = this.game.getProjectile();
-    if (projectile) projectile.start(this.x + this.width * 0.5, this.y);
+    if (!this.game.gameOver) {
+      const projectile = this.game.getProjectile();
+      if (projectile) projectile.start(this.x + this.width * 0.5, this.y);
+    }
   }
 
   increaseLiveBy(live) {
@@ -162,7 +177,7 @@ class Projectile {
     if (!this.isFree) {
       context.beginPath();
       context.rect(this.x, this.y, this.width, this.height);
-      context.fillStyle = '#FF0000';
+      context.fillStyle = TEXT_COLOR;
       context.fill();
       context.closePath();
     }
@@ -200,7 +215,7 @@ class Enemy {
   draw(context) {
     context.beginPath();
     context.strokeRect(this.x, this.y, this.width, this.height);
-    context.fillStyle = '#FF0000';
+    context.fillStyle = TEXT_COLOR;
     context.closePath();
   }
   update(x, y) {
@@ -287,8 +302,9 @@ class Wave {
 window.addEventListener('load', () => {
   const canvas = document.getElementById('myCanvas');
   const ctx = canvas.getContext('2d');
-  canvas.width = 600;
-  canvas.height = 800;
+
+  canvas.width = 500;
+  canvas.height = 700;
 
   const game = new Game(canvas);
 
