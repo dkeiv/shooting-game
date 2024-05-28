@@ -1,4 +1,14 @@
 const TEXT_COLOR = 'white';
+const SPRITE_WIDTH = 16;
+const SPRITE_HEIGHT = 16;
+
+const SPRITE_URL = './assets/SpaceInvaders.png';
+const SPRITE = new Image();
+SPRITE.src = SPRITE_URL;
+
+const getRandomInt = (max) => {
+  return Math.floor(Math.random() * max);
+};
 
 class Game {
   constructor(canvas) {
@@ -19,6 +29,8 @@ class Game {
 
     this.score = 0;
     this.gameOver = false;
+
+    this.explosions = [];
 
     this.createProjectiles();
 
@@ -49,6 +61,14 @@ class Game {
       if (w.enemies.length < 1 && !w.nextWave && !this.gameOver) {
         this.newWave();
         w.nextWave = true;
+      }
+    });
+
+    this.explosions.forEach((explosion) => {
+      explosion.update();
+      explosion.draw(context);
+      if (explosion.frame > 3) {
+        this.explosions.splice(0, 1);
       }
     });
   }
@@ -127,19 +147,21 @@ class Player {
     this.y = this.game.height - this.height;
     this.speed = 5;
     this.live = 3;
+    this.sprite = { x: 4 * SPRITE_WIDTH, y: 0 * SPRITE_HEIGHT };
   }
 
   draw(context) {
-    context.beginPath();
-    context.rect(this.x, this.y, this.width, this.height);
-    context.fillStyle = TEXT_COLOR;
-    context.fill();
-    context.closePath();
-    context.beginPath();
-    context.rect(this.x, this.y, this.width, this.height);
-    context.fillStyle = TEXT_COLOR;
-    context.fill();
-    context.closePath();
+    context.drawImage(
+      SPRITE,
+      this.sprite.x,
+      this.sprite.y,
+      SPRITE_WIDTH,
+      SPRITE_HEIGHT,
+      this.x,
+      this.y,
+      this.width,
+      this.height
+    );
   }
 
   update() {
@@ -211,13 +233,33 @@ class Enemy {
     this.positionX = positionX;
     this.positionY = positionY;
     this.isDead = false;
+    this.sprite = { x: 0, y: 0 };
+    this.getSprite();
   }
+
+  getSprite() {
+    this.sprite.x = getRandomInt(2) * SPRITE_WIDTH;
+    this.sprite.y = getRandomInt(5) * SPRITE_HEIGHT;
+  }
+
   draw(context) {
     context.beginPath();
     context.strokeRect(this.x, this.y, this.width, this.height);
     context.fillStyle = TEXT_COLOR;
     context.closePath();
+    context.drawImage(
+      SPRITE,
+      this.sprite.x,
+      this.sprite.y,
+      SPRITE_WIDTH,
+      SPRITE_HEIGHT,
+      this.x,
+      this.y,
+      this.width,
+      this.height
+    );
   }
+
   update(x, y) {
     this.x = x + this.positionX;
     this.y = y + this.positionY;
@@ -228,6 +270,7 @@ class Enemy {
         this.isDead = true;
         p.reset();
         this.game.increaseScoreBy(1);
+        this.game.explosions.push(new Explosion(this.x, this.y));
       }
     });
 
@@ -236,6 +279,7 @@ class Enemy {
       this.isDead = true;
       this.game.increaseScoreBy(-10);
       this.game.player.increaseLiveBy(-1);
+      this.game.explosions.push(new Explosion(this.x, this.y));
       if (this.game.player.live < 1) this.game.gameOver = true;
     }
 
@@ -250,13 +294,14 @@ class Enemy {
 class Wave {
   constructor(game) {
     this.game = game;
-    this.width = this.game.enemyRow * this.game.enemySize;
+    this.padding = 50;
+    this.width = this.game.enemyRow * this.game.enemySize ;
     this.height = this.game.enemyCol * this.game.enemySize;
     this.x = 0;
     this.y = -this.height;
     this.speedX = 3;
     this.speedY = 0;
-    this.speedFactor = 3;
+    this.speedFactor = 0.8;
     this.nextWave = false;
     this.enemies = [];
     this.createEnemy();
@@ -291,10 +336,43 @@ class Wave {
   createEnemy() {
     for (let col = 0; col < this.game.enemyCol; col++) {
       for (let row = 0; row < this.game.enemyRow; row++) {
-        let enemyX = row * this.game.enemySize;
+        let enemyX = row * this.game.enemySize ;
         let enemyY = col * this.game.enemySize;
         this.enemies.push(new Enemy(this.game, enemyX, enemyY));
       }
+    }
+  }
+}
+
+class Explosion {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.width = 100;
+    this.height = 100;
+    this.sprite = { x: 2 * SPRITE_WIDTH, y: 2 * SPRITE_HEIGHT };
+    this.timer = 0;
+    this.frame = 0;
+  }
+
+  draw(context) {
+    context.drawImage(
+      SPRITE,
+      this.sprite.x,
+      this.sprite.y + this.frame * SPRITE_HEIGHT,
+      SPRITE_WIDTH,
+      SPRITE_HEIGHT,
+      this.x,
+      this.y,
+      this.width,
+      this.height
+    );
+  }
+
+  update() {
+    this.timer++;
+    if (this.timer % 6 === 0) {
+      this.frame++;
     }
   }
 }
@@ -308,11 +386,7 @@ window.addEventListener('load', () => {
 
   const game = new Game(canvas);
 
-  const testLimit = 24;
-  let frame = 0;
-
   function animate() {
-    // frame === testLimit ? frame++ : return 0;
     game.render(ctx);
     window.requestAnimationFrame(animate);
   }
