@@ -1,4 +1,4 @@
-const TEXT_COLOR = 'white';
+const FILL_STYLE_COLOR = 'white';
 const SPRITE_WIDTH = 16;
 const SPRITE_HEIGHT = 16;
 
@@ -6,9 +6,7 @@ const SPRITE_URL = './assets/SpaceInvaders.png';
 const SPRITE = new Image();
 SPRITE.src = SPRITE_URL;
 
-const getRandomInt = (max) => {
-  return Math.floor(Math.random() * max);
-};
+const getRandomInt = (max) => Math.floor(Math.random() * max);
 
 class Game {
   constructor(canvas) {
@@ -18,6 +16,8 @@ class Game {
     this.player = new Player(this);
     this.numberOfProjecttile = 5;
     this.projectiles = [];
+    this.createProjectiles();
+    
     this.keys = [];
 
     this.enemyRow = 2;
@@ -32,9 +32,9 @@ class Game {
 
     this.explosions = [];
 
-    this.createProjectiles();
-
     this.started = false;
+
+    this.highscore = this.getHighscore();
 
     window.addEventListener('keydown', (e) => {
       const index = this.keys.indexOf(e.key);
@@ -42,7 +42,6 @@ class Game {
       if (e.key === ' ') this.player.shoot();
       if (e.key === 'r' && this.gameOver) this.restart();
       if (e.key === 'Enter' && !this.started) {
-        console.log(e.key);
         this.started = true;
       }
     });
@@ -51,6 +50,18 @@ class Game {
       const index = this.keys.indexOf(e.key);
       if (index > -1) this.keys.splice(index, 1);
     });
+  }
+
+  saveHighscore() {
+    const last = window.localStorage.getItem('highscore');
+    if (this.highscore > last)
+      window.localStorage.setItem('highscore', this.highscore);
+  }
+
+  getHighscore() {
+    return window.localStorage.getItem('highscore')
+      ? window.localStorage.getItem('highscore')
+      : 0;
   }
 
   start(context) {
@@ -88,7 +99,7 @@ class Game {
 
       context.textAlign = 'center';
       context.font = '50px Arial';
-      context.fillStyle = 'white';
+      context.fillStyle = FILL_STYLE_COLOR;
       context.fillText(
         `Press Enter to start!`,
         this.width * 0.5,
@@ -96,7 +107,6 @@ class Game {
       );
       context.restore();
     }
-    console.log(this.started);
   }
 
   clearCanvas(context) {
@@ -130,6 +140,8 @@ class Game {
     context.font = '30px Arial';
     context.fillText(`Score: ${this.score} `, 20, 40);
     context.fillText(`HP: ${this.player.live} `, 20, 80);
+    context.fillText(`High score: ${this.highscore} `, 20, 120);
+
     if (this.gameOver) {
       context.textAlign = 'center';
       context.font = '50px Arial';
@@ -148,6 +160,10 @@ class Game {
   increaseScoreBy(score) {
     if (!this.gameOver) {
       this.score += score;
+    }
+
+    if (this.score >= this.highscore) {
+      this.highscore = this.score;
     }
   }
 
@@ -238,7 +254,7 @@ class Projectile {
     if (!this.isFree) {
       context.beginPath();
       context.rect(this.x, this.y, this.width, this.height);
-      context.fillStyle = TEXT_COLOR;
+      context.fillStyle = FILL_STYLE_COLOR;
       context.fill();
       context.closePath();
     }
@@ -284,7 +300,7 @@ class Enemy {
   draw(context) {
     context.beginPath();
     context.strokeRect(this.x, this.y, this.width, this.height);
-    context.fillStyle = TEXT_COLOR;
+    context.fillStyle = FILL_STYLE_COLOR;
     context.closePath();
     context.drawImage(
       SPRITE,
@@ -319,13 +335,17 @@ class Enemy {
       this.game.increaseScoreBy(-10);
       this.game.player.increaseLiveBy(-1);
       this.game.explosions.push(new Explosion(this.x, this.y));
-      if (this.game.player.live < 1) this.game.gameOver = true;
+      if (this.game.player.live < 1) {
+        this.game.gameOver = true;
+        this.game.saveHighscore();
+      }
     }
 
     // game over
     if (this.y + this.height > this.game.height) {
       this.game.gameOver = true;
       this.isDead = true;
+      this.game.saveHighscore();
     }
   }
 }
@@ -340,7 +360,7 @@ class Wave {
     this.y = -this.height;
     this.speedX = 1;
     this.speedY = 0;
-    this.speedFactor = 0.5;
+    this.speedFactor = 5;
     this.nextWave = false;
     this.enemies = [];
     this.createEnemy();
