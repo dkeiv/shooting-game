@@ -20,8 +20,8 @@ class Game {
     this.projectiles = [];
     this.keys = [];
 
-    this.enemyRow = 4;
-    this.enemyCol = 3;
+    this.enemyRow = 2;
+    this.enemyCol = 2;
     this.enemySize = 60;
 
     this.waves = [];
@@ -34,10 +34,17 @@ class Game {
 
     this.createProjectiles();
 
+    this.started = false;
+
     window.addEventListener('keydown', (e) => {
       const index = this.keys.indexOf(e.key);
       if (index === -1) this.keys.push(e.key);
-      if (e.key == ' ') this.player.shoot();
+      if (e.key === ' ') this.player.shoot();
+      if (e.key === 'r' && this.gameOver) this.restart();
+      if (e.key === 'Enter' && !this.started) {
+        console.log(e.key);
+        this.started = true;
+      }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -46,7 +53,7 @@ class Game {
     });
   }
 
-  render(context) {
+  start(context) {
     this.clearCanvas(context); // clear previous frame
     this.drawStatus(context);
     this.player.draw(context);
@@ -71,6 +78,25 @@ class Game {
         this.explosions.splice(0, 1);
       }
     });
+  }
+
+  render(context) {
+    if (this.started) {
+      this.start(context);
+    } else {
+      context.save();
+
+      context.textAlign = 'center';
+      context.font = '50px Arial';
+      context.fillStyle = 'white';
+      context.fillText(
+        `Press Enter to start!`,
+        this.width * 0.5,
+        this.height * 0.5
+      );
+      context.restore();
+    }
+    console.log(this.started);
   }
 
   clearCanvas(context) {
@@ -135,6 +161,19 @@ class Game {
       this.enemyRow++;
     }
     this.waves.push(new Wave(this));
+  }
+
+  restart() {
+    this.player.x = (this.width - this.player.width) * 0.5;
+    this.player.y = this.height - this.player.height;
+    this.player.live = 3;
+    this.enemyRow = 2;
+    this.enemyCol = 2;
+    this.waves = [];
+    this.waves.push(new Wave(this));
+
+    this.score = 0;
+    this.gameOver = false;
   }
 }
 
@@ -295,13 +334,13 @@ class Wave {
   constructor(game) {
     this.game = game;
     this.padding = 50;
-    this.width = this.game.enemyRow * this.game.enemySize ;
+    this.width = this.game.enemyRow * this.game.enemySize;
     this.height = this.game.enemyCol * this.game.enemySize;
     this.x = 0;
     this.y = -this.height;
-    this.speedX = 3;
+    this.speedX = 1;
     this.speedY = 0;
-    this.speedFactor = 0.8;
+    this.speedFactor = 0.5;
     this.nextWave = false;
     this.enemies = [];
     this.createEnemy();
@@ -336,7 +375,7 @@ class Wave {
   createEnemy() {
     for (let col = 0; col < this.game.enemyCol; col++) {
       for (let row = 0; row < this.game.enemyRow; row++) {
-        let enemyX = row * this.game.enemySize ;
+        let enemyX = row * this.game.enemySize;
         let enemyY = col * this.game.enemySize;
         this.enemies.push(new Enemy(this.game, enemyX, enemyY));
       }
