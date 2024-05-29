@@ -37,6 +37,7 @@ class Game {
       if (e.key === 'r' && this.gameOver) this.restart();
       if (e.key === 'Enter' && !this.started) {
         this.started = true;
+        bgMusic.play();
       }
       if (e.key === 'g') this.toggleDebug();
     });
@@ -47,9 +48,9 @@ class Game {
     });
   }
 
-  start(context) {
+  play(context) {
     this.drawStatus(context);
-    
+
     this.player.draw(context);
     this.player.update();
 
@@ -61,7 +62,7 @@ class Game {
     this.waves.forEach((w) => {
       w.update();
       w.draw(context);
-      
+
       if (w.enemies.length < 1 && !w.nextWave && !this.gameOver) {
         this.newWave();
         w.nextWave = true;
@@ -79,7 +80,7 @@ class Game {
 
   render(context) {
     if (this.started) {
-      this.start(context);
+      this.play(context);
     } else {
       context.save();
       context.textAlign = 'center';
@@ -156,6 +157,7 @@ class Game {
     this.player.x = (this.width - this.player.width) * 0.5;
     this.player.y = this.height - this.player.height;
     this.player.live = 3;
+
     this.enemyRow = 2;
     this.enemyCol = 2;
     this.waves = [];
@@ -163,6 +165,11 @@ class Game {
 
     this.score = 0;
     this.gameOver = false;
+  }
+
+  over() {
+    this.gameOver = true;
+    gameOverSound.play();
   }
 
   toggleDebug() {

@@ -35,16 +35,28 @@ class Player {
     if (this.game.keys.indexOf('ArrowRight') > -1) {
       this.x = Math.min(this.x + this.speed, this.game.width - this.width);
     }
+
+    if (this.game.player.live < 1) {
+      this.dead();
+    }
   }
 
   shoot() {
     if (!this.game.gameOver) {
       const projectile = this.game.getProjectile();
-      if (projectile) projectile.start(this.x + this.width * 0.5, this.y);
+      if (projectile && this.game.started) {
+        lazerSound.play();
+        projectile.start(this.x + this.width * 0.5, this.y);
+      }
     }
   }
 
   increaseLiveBy(live) {
     this.live <= 0 ? (this.live = 0) : (this.live += live);
+  }
+
+  dead() {
+    this.game.over();
+    this.game.saveHighscore();
   }
 }

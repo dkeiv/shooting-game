@@ -7,7 +7,7 @@ body {
   position: absolute;
   top: 2vh;
   left: 2vw;
-  background: url(./assets/SpaceInvaders_BackgroundFloor.png) bottom repeat-x,
-    url(./assets/SpaceInvaders_BackgroundBuildings.png) 0px 572px repeat-x,
-    url(./assets/SpaceInvaders_Background.png) repeat;
+  background: url(./assets/image/SpaceInvaders_BackgroundFloor.png) bottom repeat-x,
+    url(./assets/image/SpaceInvaders_BackgroundBuildings.png) 0px 572px repeat-x,
+    url(./assets/image/SpaceInvaders_Background.png) repeat;
 }

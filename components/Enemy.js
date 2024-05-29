@@ -49,11 +49,11 @@ class Enemy {
     // enemy collides projectiles
     this.game.projectiles.forEach((p) => {
       if (!p.isFree && collisionDectection(this, p)) {
+        hitSound.play();
         this.live--;
         this.updateSprite();
         if (this.live < 1) {
-          this.isDead = true;
-          this.game.explosions.push(new Explosion(this.x, this.y));
+          this.dead();
         }
         p.reset();
         this.game.increaseScoreBy(this.score);
@@ -62,23 +62,23 @@ class Enemy {
 
     // enemy collides player
     if (!this.isDead && collisionDectection(this, this.game.player)) {
-      this.isDead = true;
-      this.game.explosions.push(new Explosion(this.x, this.y));
+      this.dead();
 
       this.game.increaseScoreBy(-5);
       this.game.player.increaseLiveBy(-1);
-
-      if (this.game.player.live < 1) {
-        this.game.gameOver = true;
-        this.game.saveHighscore();
-      }
     }
 
     // game over. Enemy reachs bottom
     if (this.y + this.height > this.game.height) {
-      this.game.gameOver = true;
+      this.game.over();
       this.isDead = true;
       this.game.saveHighscore();
     }
+  }
+
+  dead() {
+    this.isDead = true;
+    this.game.explosions.push(new Explosion(this.x, this.y));
+    explosionSound.play();
   }
 }
